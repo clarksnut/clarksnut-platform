@@ -1,0 +1,19 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: clarksnut
+  labels:
+    service: clarksnut
+    expose: "true"
+  annotations:
+    api.service.kubernetes.io/path: "/api/"
+    service.alpha.openshift.io/dependencies: '[{"name":"clarksnut-db","namespace":"","kind":"Service"}]'
+spec:
+  ports:
+    - name: "8080"
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  selector:
+    service: clarksnut
+  type: ClusterIP

@@ -1,0 +1,73 @@
+metadata:
+  name: clarksnut-db
+  labels:
+    service: clarksnut-db
+  annotations:
+    configmap.fabric8.io/update-on-change: "clarksnut"
+spec:
+  replicas: 1
+  selector:
+    service: clarksnut-db
+  template:
+    metadata:
+      labels:
+        service: clarksnut-db
+    spec:
+      containers:
+      - name: clarksnut-db
+        image: registry.centos.org/postgresql/postgresql:9.6
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRESQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: clarksnut
+              value: db.database
+        - name: POSTGRESQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.user
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.password
+        - name: POSTGRESQL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.admin.password
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - exec pg_isready --host $POD_IP
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - exec pg_isready --host $POD_IP
+          initialDelaySeconds: 20
+          timeoutSeconds: 3
+          periodSeconds: 5
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/pgsql
+          name: clarksnut-postgresql-data
+          readOnly: false
+      volumes:
+      - name: clarksnut-postgresql-data
+        persistentVolumeClaim:
+          claimName: clarksnut-postgresql-data

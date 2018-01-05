@@ -1,0 +1,197 @@
+metadata:
+  name: clarksnut
+  labels:
+    service: clarksnut
+  annotations:
+    configmap.fabric8.io/update-on-change: "clarksnut"
+spec:
+  replicas: 1
+  selector:
+    service: clarksnut
+  template:
+    metadata:
+      annotations:
+        fabric8.io/service-dependencies: "clarksnut-db,keycloak"
+        pod.beta.kubernetes.io/init-containers: |-
+          [
+          {
+            "name": "envvar-substitution",
+            "image": "fabric8/envsubst-file:1.0.2",
+            "imagePullPolicy": "IfNotPresent",
+            "args": [
+              "keycloak.json",
+              "clarksnut-stages.yml"
+            ],
+            "env": [
+              {
+                "name": "CN_KEYCLOAK_REALM"
+              },
+              {
+                "name": "CN_KEYCLOAK_URL"
+              },
+              {
+                "name": "CN_KEYCLOAK_SECRET"
+              },
+              {
+                "name": "CN_POSTGRES_USER"
+              },
+              {
+                "name": "CN_POSTGRES_PASSWORD"
+              },
+              {
+                "name": "CN_POSTGRES_HOST"
+              },
+              {
+                "name": "CN_POSTGRES_PORT"
+              },
+              {
+                "name": "CN_POSTGRES_DATABASE"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "clarksnut-keycloak-config",
+                "mountPath": "/workdir/keycloak.json",
+                "subPath": "config/keycloak.json"
+              },
+              {
+                "name": "clarksnut-stage-config",
+                "mountPath": "/workdir/clarksnut-stages.yml",
+                "subPath": "config/clarksnut-stages.yml"
+              },
+              {
+                "name": "clarksnut-subst-config",
+                "mountPath": "/processed"
+              }
+            ]
+          },
+          {
+            "name": "wait-for-clarksnut-db",
+            "image": "fabric8/fabric8-dependency-wait-service:${dependency-wait-service.version}",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sh", "-c", "fabric8-dependency-wait-service-linux-amd64 postgres://clarksnut@clarksnut-db:5432"],
+            "env": [{
+              "name": "DEPENDENCY_POLL_INTERVAL",
+              "value": "1"
+            }, {
+              "name": "DEPENDENCY_LOG_VERBOSE",
+              "value": "true"
+            }]
+          },
+          {
+            "name": "wait-for-keycloak",
+            "image": "fabric8/fabric8-dependency-wait-service:${dependency-wait-service.version}",
+            "imagePullPolicy": "IfNotPresent",
+            "command": ["sh", "-c", "fabric8-dependency-wait-service-linux-amd64 http://keycloak:80"],
+            "env": [{
+              "name": "DEPENDENCY_POLL_INTERVAL",
+              "value": "1"
+            }, {
+              "name": "DEPENDENCY_LOG_VERBOSE",
+              "value": "true"
+            }]
+          }]
+      labels:
+        service: clarksnut
+    spec:
+      containers:
+      - image: clarksnut/clarksnut:${clarksnut.version}
+        env:
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: JAVA_APP_DIR
+          value: /deployments
+        - name: JAVA_OPTIONS
+          value: -Dswarm.project.stage.file=file:///deployments/config/clarksnut-stages.yml -Dswarm.keycloak.json.path=/deployments/config/keycloak.json -Dswarm.project.stage=custom
+        - name: CN_HIBERNATE_STRATEGY
+          value: update
+        - name: CN_HIBERNATE_SHOW_SQL
+          value: false
+        - name: CN_HIBERNATE_FORMAT_SQL
+          value: false
+        - name: CN_HIBERNATE_SECOND_LEVEL_CACHE
+          value: true
+        - name: CN_HIBERNATE_INDEX_MANAGER
+          value: directory-based
+        - name: CN_POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.user
+        - name: CN_POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.password
+        - name: CN_KEYCLOAK_REALM
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: keycloak.realm
+        - name: CN_KEYCLOAK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: clarksnut
+              key: keycloak.url
+        - name: CN_KEYCLOAK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: keycloak.secret
+        - name: CN_POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: clarksnut
+              key: db.host
+        - name: CN_POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: clarksnut
+              key: db.port
+        - name: CN_POSTGRES_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: clarksnut
+              key: db.database
+        - name: CN_POSTGRES_SSLMODE
+          valueFrom:
+            configMapKeyRef:
+              name: CN
+              key: postgres.sslmode
+        - name: CN_POSTGRES_CONNECTION_MAXIDLE
+          valueFrom:
+            configMapKeyRef:
+              name: clarksnut
+              key: postgres.connection.maxidle
+        - name: CN_POSTGRES_CONNECTION_MAXOPEN
+          valueFrom:
+            configMapKeyRef:
+              name: clarksnut
+              key: postgres.connection.maxopen
+        imagePullPolicy: IfNotPresent
+        name: clarksnut
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/status
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/status
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1

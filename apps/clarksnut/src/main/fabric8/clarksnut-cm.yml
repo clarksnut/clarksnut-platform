@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clarksnut
+  annotations:
+    expose.service-key.config.fabric8.io/keycloak: keycloak.url
+    expose-no-path.service-key.config.fabric8.io/auth: auth.url
+type: Opaque
+data:
+  db.host: clarksnut-db
+  db.port: 5432
+  db.database: clarksnut
+  keycloak.url: http://keycloak
+  postgres.connection.maxidle: "90"
+  postgres.connection.maxopen: "90"
+  # TODO
+  #postgres.sslmode: require
+  postgres.sslmode: disable
+  keycloak.json: |-
+      {
+        "realm": "${CN_KEYCLOAK_REALM}",
+        "auth-server-url": "${CN_KEYCLOAK_URL}",
+        "resource": "clarksnut",
+        "ssl-required": "external",
+        "credentials": {
+          "secret": "${CN_KEYCLOAK_SECRET}"
+        },
+        "bearer-only": true,
+        "enable-cors": true
+      }
+  clarksnut-config.yml: |-
+      project:
+        stage: custom
+      swarm:
+        datasources:
+          data-sources:
+            ClarksnutDS:
+              jndi-name: java:jboss/datasources/ClarksnutDS
+              driver-name: postgresql
+              user-name: ${CN_POSTGRES_USER}
+              password: ${CN_POSTGRES_PASSWORD}
+              connection-url: jdbc:postgresql://${CN_POSTGRES_HOST}:${CN_POSTGRES_PORT}/${CN_POSTGRES_DATABASE}

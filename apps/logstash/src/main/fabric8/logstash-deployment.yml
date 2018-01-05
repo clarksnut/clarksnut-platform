@@ -1,0 +1,29 @@
+metadata:
+  name: logstash
+  labels:
+    component: logstash
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:6.1.1
+        resources:
+          # need more cpu upon initialization, therefore burstable class
+          limits:
+            cpu: 1000m
+          requests:
+            cpu: 100m
+        env:
+        - name: ELASTICSEARCH_URL
+          value: http://elasticsearch:9200
+        - name: XPACK_MONITORING_ENABLED
+          value: "false"
+        ports:
+        - containerPort: 5601
+          name: ui
+          protocol: TCP
