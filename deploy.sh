@@ -99,5 +99,6 @@ oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default
 # General configuration
 oc login -u developer
 echo "Applying the CLARKSNUT template ${TEMPLATE}"
-oc process -f ${TEMPLATE} -p APISERVER_HOSTPORT=${APISERVER} -p NODE_IP=${NODE_IP} -p EXPOSER=${EXPOSER} | oc apply -f -
+#oc process -f ${TEMPLATE} -p APISERVER_HOSTPORT=${APISERVER} -p NODE_IP=${NODE_IP} -p EXPOSER=${EXPOSER} | oc apply -f -
+oc process -f ${TEMPLATE} | oc apply -f -
 echo "Please wait while the pods all startup!"
