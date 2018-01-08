@@ -17,6 +17,7 @@
 
     <modules>
         <module>clarksnut</module>
+        <module>clarksnut-db</module>
         <module>elasticsearch</module>
         <module>keycloak</module>
         <module>keycloak-db</module>

@@ -4,7 +4,7 @@ metadata:
     component: elasticsearch
     role: master
 spec:
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
@@ -38,7 +38,7 @@ spec:
         - name: CLUSTER_NAME
           value: elasticsearch
         - name: NUMBER_OF_MASTERS
-          value: "2"
+          value: "1"
         - name: NODE_MASTER
           value: "true"
         - name: NODE_INGEST

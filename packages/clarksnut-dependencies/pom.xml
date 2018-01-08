@@ -17,6 +17,11 @@
     <dependencies>
         <dependency>
             <groupId>io.clarksnut.platform.apps</groupId>
+            <artifactId>clarksnut-db</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.clarksnut.platform.apps</groupId>
             <artifactId>keycloak</artifactId>
             <version>${project.version}</version>
         </dependency>
