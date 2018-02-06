@@ -19,6 +19,7 @@
     <module>clarksnut-dependencies</module>
     <module>clarksnut-full</module>
     <module>clarksnut-full-dependencies</module>
+    <module>clarksnut-minimal-dependencies</module>
     <module>clarksnut-system</module>
   </modules>
 

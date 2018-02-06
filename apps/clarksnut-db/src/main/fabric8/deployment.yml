@@ -18,10 +18,21 @@ spec:
         env:
         - name: POSTGRESQL_DATABASE
           value: clarksnut
-        - name: POSTGRESQL_PASSWORD
-          value: clarksnut
         - name: POSTGRESQL_USER
-          value: clarksnut
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.user
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.password
+        - name: POSTGRESQL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clarksnut
+              key: db.admin.password
         - name: POD_IP
           valueFrom:
             fieldRef:
